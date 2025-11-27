@@ -22,6 +22,7 @@ type Session = {
 };
 
 // ===== localStorageと同期するカスタムフック =====
+
 function useLocalStorageState<T>(
   key: string,
   defaultValue: T
@@ -48,6 +49,55 @@ function useLocalStorageState<T>(
   return [value, setValue];
 }
 
+// ===== ボタンスタイル定義 =====
+const timerPrimaryButtonStyle: React.CSSProperties = {
+  padding: "10px 20px",
+  borderRadius: "999px",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+  backgroundColor: "#61dafb",
+  color: "#000",
+  transition: "transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease",
+};
+
+const timerSecondaryButtonStyle: React.CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: "999px",
+  border: "1px solid rgba(255,255,255,0.5)",
+  cursor: "pointer",
+  fontSize: "0.9rem",
+  backgroundColor: "transparent",
+  color: "inherit",
+  transition: "transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease, border-color 0.2s ease",
+};
+
+const taskPrimaryButtonStyle: React.CSSProperties = {
+  padding: "6px 14px",
+  borderRadius: "999px",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "0.85rem",
+  fontWeight: 600,
+  backgroundColor: "#61dafb",
+  color: "#000",
+  boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+  transition: "background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease",
+};
+
+const taskButtonStyle: React.CSSProperties = {
+  padding: "4px 10px",
+  borderRadius: "999px",
+  border: "1px solid #ccc",
+  cursor: "pointer",
+  fontSize: "0.8rem",
+  backgroundColor: "#f8f9fa",
+  color: "#333",
+  transition: "background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease",
+};
+
 const App: React.FC = () => {
   // ==== タスク関連 ====
   const [tasks, setTasks] = useLocalStorageState<Task[]>("tasks", []);
@@ -63,12 +113,8 @@ const App: React.FC = () => {
   );
 
   // ==== タイマー関連 ====
-  const FOCUS_MIN = 25;
-  const BREAK_MIN = 5;
-
-  // テスト用に超短くしたいときはこっちにしてもOK
-  // const FOCUS_MIN = 0.1; // 6秒くらい
-  // const BREAK_MIN = 0.05;
+  const FOCUS_MIN = 1;
+  const BREAK_MIN = 1;
 
   const [mode, setMode] = useState<Mode>("focus");
   const [secondsLeft, setSecondsLeft] = useState<number>(FOCUS_MIN * 60);
@@ -244,60 +290,135 @@ const App: React.FC = () => {
     <div
       style={{
         fontFamily: "system-ui, sans-serif",
-        padding: "16px",
-        maxWidth: "1000px",
-        margin: "0 auto",
-        display: "grid",
-        gap: "16px",
-        gridTemplateColumns: "1.2fr 1fr",
+        minHeight: "100vh",
+        // 状態に応じて背景色を切り替え（動作中はReactブルー）
+        background: "#242424",
+        backgroundSize: "400% 400%",
+        animation: isRunning ? "bgMove 8s ease infinite" : "none",
+        color: isRunning ? "#61dafb" : "#fff",
+        padding: "24px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "32px",
+        transition: "background 1s ease, color 0.8s ease",
       }}
     >
-      {/* 左カラム：タイマー + タスク */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* ポモドーロタイマー */}
-        <section
+      {/* 背景アニメーションの定義 */}
+      <style>
+        {`
+          @keyframes bgMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}
+      </style>
+
+      {/* ===== 画面中央の大きいタイマー ===== */}
+      <section style={{ textAlign: "center" }}>
+        <h2>⏱ ポモドーロタイマー</h2>
+        <div
           style={{
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "12px",
+            position: "relative",
+            width: "220px",
+            height: "220px",
+            margin: "20px auto",
           }}
         >
-          <h2>⏱ ポモドーロタイマー</h2>
-          <p style={{ marginBottom: "4px" }}>
-            モード： <strong>{mode === "focus" ? "集中" : "休憩"}</strong>
-          </p>
+          <svg width="220" height="220">
+            <circle
+              cx="110"
+              cy="110"
+              r="100"
+              stroke="#ccc"
+              strokeWidth="10"
+              fill="none"
+            />
+            <circle
+              cx="110"
+              cy="110"
+              r="100"
+              stroke="#61dafb"
+              strokeWidth="10"
+              fill="none"
+              strokeDasharray={2 * Math.PI * 100}
+              strokeDashoffset={
+                2 * Math.PI * 100 * (1 - secondsLeft / (mode === "focus" ? FOCUS_MIN * 60 : BREAK_MIN * 60))
+              }
+              strokeLinecap="round"
+              transform="rotate(-90 110 110)"
+              style={{
+                transition: "stroke-dashoffset 1s linear",
+              }}
+            />
+          </svg>
           <div
             style={{
-              fontSize: "2.5rem",
-              textAlign: "center",
-              margin: "8px 0",
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              fontSize: "3rem",
+              fontWeight: "bold",
+              color: "#fff",
             }}
           >
             {formatTime(secondsLeft)}
           </div>
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              justifyContent: "center",
-              marginBottom: "8px",
-            }}
+        </div>
+        <p style={{ fontSize: "1.2rem", marginBottom: "12px" }}>
+          現在モード：<strong>{mode === "focus" ? "集中" : "休憩"}</strong>
+        </p>
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            onClick={handleStart}
+            style={timerPrimaryButtonStyle}
           >
-            <button onClick={handleStart}>
-              {isRunning ? "再スタート" : "スタート"}
-            </button>
-            <button onClick={handlePause}>一時停止</button>
-            <button onClick={handleReset}>リセット</button>
-          </div>
-          <button onClick={handleSwitchMode} style={{ fontSize: "0.9rem" }}>
-            モード切替（今は {mode === "focus" ? "集中" : "休憩"}）
+            {isRunning ? "再スタート" : "スタート"}
           </button>
-        </section>
+          <button
+            onClick={handlePause}
+            style={timerSecondaryButtonStyle}
+          >
+            一時停止
+          </button>
+          <button
+            onClick={handleReset}
+            style={timerSecondaryButtonStyle}
+          >
+            リセット
+          </button>
+          <button
+            onClick={handleSwitchMode}
+            style={timerSecondaryButtonStyle}
+          >
+            モード切替
+          </button>
+        </div>
+      </section>
 
+      {/* ===== 下部エリア：左にタスク、右にグラフ＋ログ ===== */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "16px",
+          width: "100%",
+          maxWidth: "1000px",
+        }}
+      >
         {/* タスク管理 */}
         <section
           style={{
-            border: "1px solid #ddd",
+            backgroundColor: "white",
+            color: "black",
             borderRadius: "8px",
             padding: "12px",
           }}
@@ -330,7 +451,9 @@ const App: React.FC = () => {
                 onChange={(e) => setTaskEstimate(Number(e.target.value))}
                 style={{ width: "80px" }}
               />
-              <button type="submit">追加</button>
+              <button type="submit" style={taskPrimaryButtonStyle}>
+                追加
+              </button>
             </div>
           </form>
 
@@ -369,22 +492,20 @@ const App: React.FC = () => {
                   <button
                     onClick={() => setSelectedTaskId(t.id)}
                     style={{
-                      fontSize: "0.8rem",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
+                      ...taskButtonStyle,
                       border:
                         selectedTaskId === t.id
                           ? "2px solid #007bff"
                           : "1px solid #ccc",
                       background:
-                        selectedTaskId === t.id ? "#e6f0ff" : "透明",
+                        selectedTaskId === t.id ? "#e6f0ff" : "#f8f9fa",
                     }}
                   >
                     {selectedTaskId === t.id ? "選択中" : "選択"}
                   </button>
                   <button
                     onClick={() => toggleTaskDone(t.id)}
-                    style={{ fontSize: "0.8rem", padding: "4px 8px" }}
+                    style={taskButtonStyle}
                   >
                     {t.done ? "未完了に戻す" : "完了"}
                   </button>
@@ -393,135 +514,142 @@ const App: React.FC = () => {
             </ul>
           )}
         </section>
-      </div>
 
-      {/* 右カラム：簡易グラフ & セッションログ */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        {/* 可視化 */}
-        <section
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "12px",
-          }}
-        >
-          <h2>📈 日別集中時間</h2>
-          {daysSorted.length === 0 ? (
-            <p style={{ fontSize: "0.9rem", color: "#666" }}>
-              まだ集中セッションの記録がありません。タイマーを回してみよう。
-            </p>
-          ) : (
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  gap: "8px",
-                  height: "150px",
-                  borderBottom: "1px solid #ccc",
-                  paddingBottom: "8px",
-                  marginBottom: "8px",
-                }}
-              >
-                {daysSorted.map((day) => {
-                  const sec = dailyStats[day];
-                  const ratio = maxSec ? sec / maxSec : 0;
-                  const height = 20 + ratio * 100;
-                  const min = Math.round(sec / 60);
-                  return (
-                    <div
-                      key={day}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        flex: 1,
-                      }}
-                    >
+        {/* 右側：グラフ + セッションログ */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* 可視化 */}
+          <section
+            style={{
+              backgroundColor: "white",
+              color: "black",
+              borderRadius: "8px",
+              padding: "12px",
+            }}
+          >
+            <h2>📈 日別集中時間</h2>
+            {daysSorted.length === 0 ? (
+              <p style={{ fontSize: "0.9rem", color: "#666" }}>
+                まだ集中セッションの記録がありません。タイマーを回してみよう。
+              </p>
+            ) : (
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: "8px",
+                    height: "150px",
+                    borderBottom: "1px solid #ccc",
+                    paddingBottom: "8px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {daysSorted.map((day) => {
+                    const sec = dailyStats[day];
+                    const ratio = maxSec ? sec / maxSec : 0;
+                    const height = 20 + ratio * 100;
+                    const min = Math.round(sec / 60);
+                    return (
                       <div
+                        key={day}
                         style={{
-                          width: "20px",
-                          height: `${height}px`,
-                          borderRadius: "4px 4px 0 0",
-                          border: "1px solid #007bff",
-                          background:
-                            "linear-gradient(to top, #cfe2ff, #f5f9ff)",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          flex: 1,
                         }}
-                        title={`${day}: ${min}分`}
-                      />
-                      <div style={{ fontSize: "0.7rem", marginTop: "4px" }}>
-                        {min}分
+                      >
+                        <div
+                          style={{
+                            width: "20px",
+                            height: `${height}px`,
+                            borderRadius: "4px 4px 0 0",
+                            border: "1px solid #007bff",
+                            background:
+                              "linear-gradient(to top, #cfe2ff, #f5f9ff)",
+                          }}
+                          title={`${day}: ${min}分`}
+                        />
+                        <div
+                          style={{ fontSize: "0.7rem", marginTop: "4px" }}
+                        >
+                          {min}分
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "0.7rem",
-                  color: "#555",
-                }}
-              >
-                {daysSorted.map((day) => (
-                  <span key={day} style={{ flex: 1, textAlign: "center" }}>
-                    {day.slice(5)} {/* MM-DD */}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* セッションログ */}
-        <section
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "12px",
-            maxHeight: "220px",
-            overflow: "auto",
-          }}
-        >
-          <h2>🧾 セッションログ</h2>
-          {sessions.length === 0 ? (
-            <p style={{ fontSize: "0.9rem", color: "#666" }}>
-              まだログはありません。
-            </p>
-          ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {sessions
-                .slice()
-                .reverse()
-                .map((s) => {
-                  const d = new Date(s.start);
-                  const labelDate = d.toLocaleString();
-                  const min = Math.round(s.durationSec / 60);
-                  const task =
-                    s.taskId && tasks.find((t) => t.id === s.taskId);
-                  return (
-                    <li
-                      key={s.id}
-                      style={{
-                        borderBottom: "1px solid #eee",
-                        padding: "4px 0",
-                        fontSize: "0.8rem",
-                      }}
+                    );
+                  })}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "0.7rem",
+                    color: "#555",
+                  }}
+                >
+                  {daysSorted.map((day) => (
+                    <span
+                      key={day}
+                      style={{ flex: 1, textAlign: "center" }}
                     >
-                      <div>
-                        [{s.type === "focus" ? "集中" : "休憩"}] {labelDate}
-                      </div>
-                      <div>
-                        時間: {min} 分
-                        {task && <> / タスク: {task.title}</>}
-                      </div>
-                    </li>
-                  );
-                })}
-            </ul>
-          )}
-        </section>
+                      {day.slice(5)} {/* MM-DD */}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* セッションログ */}
+          <section
+            style={{
+              backgroundColor: "white",
+              color: "black",
+              borderRadius: "8px",
+              padding: "12px",
+              maxHeight: "220px",
+              overflow: "auto",
+            }}
+          >
+            <h2>🧾 セッションログ</h2>
+            {sessions.length === 0 ? (
+              <p style={{ fontSize: "0.9rem", color: "#666" }}>
+                まだログはありません。
+              </p>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {sessions
+                  .slice()
+                  .reverse()
+                  .map((s) => {
+                    const d = new Date(s.start);
+                    const labelDate = d.toLocaleString();
+                    const min = Math.round(s.durationSec / 60);
+                    const task =
+                      s.taskId && tasks.find((t) => t.id === s.taskId);
+                    return (
+                      <li
+                        key={s.id}
+                        style={{
+                          borderBottom: "1px solid #eee",
+                          padding: "4px 0",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        <div>
+                          [{s.type === "focus" ? "集中" : "休憩"}] {labelDate}
+                        </div>
+                        <div>
+                          時間: {min} 分
+                          {task && <> / タスク: {task.title}</>}
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );
