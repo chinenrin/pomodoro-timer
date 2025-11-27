@@ -252,8 +252,48 @@ const App: React.FC = () => {
         gridTemplateColumns: "1.2fr 1fr",
       }}
     >
-      {/* 左カラム：タスク + タイマー */}
+      {/* 左カラム：タイマー + タスク */}
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        {/* ポモドーロタイマー */}
+        <section
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            padding: "12px",
+          }}
+        >
+          <h2>⏱ ポモドーロタイマー</h2>
+          <p style={{ marginBottom: "4px" }}>
+            モード： <strong>{mode === "focus" ? "集中" : "休憩"}</strong>
+          </p>
+          <div
+            style={{
+              fontSize: "2.5rem",
+              textAlign: "center",
+              margin: "8px 0",
+            }}
+          >
+            {formatTime(secondsLeft)}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              justifyContent: "center",
+              marginBottom: "8px",
+            }}
+          >
+            <button onClick={handleStart}>
+              {isRunning ? "再スタート" : "スタート"}
+            </button>
+            <button onClick={handlePause}>一時停止</button>
+            <button onClick={handleReset}>リセット</button>
+          </div>
+          <button onClick={handleSwitchMode} style={{ fontSize: "0.9rem" }}>
+            モード切替（今は {mode === "focus" ? "集中" : "休憩"}）
+          </button>
+        </section>
+
         {/* タスク管理 */}
         <section
           style={{
@@ -262,7 +302,7 @@ const App: React.FC = () => {
             padding: "12px",
           }}
         >
-          <h2>📋 研究タスク</h2>
+          <h2>📋 今やるタスク</h2>
           <form
             onSubmit={handleAddTask}
             style={{ display: "grid", gap: "8px", marginBottom: "8px" }}
@@ -337,7 +377,7 @@ const App: React.FC = () => {
                           ? "2px solid #007bff"
                           : "1px solid #ccc",
                       background:
-                        selectedTaskId === t.id ? "#e6f0ff" : "transparent",
+                        selectedTaskId === t.id ? "#e6f0ff" : "透明",
                     }}
                   >
                     {selectedTaskId === t.id ? "選択中" : "選択"}
@@ -352,46 +392,6 @@ const App: React.FC = () => {
               ))}
             </ul>
           )}
-        </section>
-
-        {/* ポモドーロタイマー */}
-        <section
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "12px",
-          }}
-        >
-          <h2>⏱ ポモドーロタイマー</h2>
-          <p style={{ marginBottom: "4px" }}>
-            モード： <strong>{mode === "focus" ? "集中" : "休憩"}</strong>
-          </p>
-          <div
-            style={{
-              fontSize: "2.5rem",
-              textAlign: "center",
-              margin: "8px 0",
-            }}
-          >
-            {formatTime(secondsLeft)}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              justifyContent: "center",
-              marginBottom: "8px",
-            }}
-          >
-            <button onClick={handleStart}>
-              {isRunning ? "再スタート" : "スタート"}
-            </button>
-            <button onClick={handlePause}>一時停止</button>
-            <button onClick={handleReset}>リセット</button>
-          </div>
-          <button onClick={handleSwitchMode} style={{ fontSize: "0.9rem" }}>
-            モード切替（今は {mode === "focus" ? "集中" : "休憩"}）
-          </button>
         </section>
       </div>
 
